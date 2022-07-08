@@ -11,7 +11,7 @@ class BilinearDecoder(nn.Module):
         self.M = nn.ParameterDict()
 
         for relation in relations:
-            self.M[relation] = nn.Parameter(torch.empty((dim, dim))).to(device)
+            self.M[relation] = nn.Parameter(torch.empty((dim, dim)).to(device))
 
         self.init_weights()
         
@@ -34,11 +34,11 @@ class DEDICOM(nn.Module):
     def __init__(self, dim, relations, device):
         super().__init__()
 
-        self.R = nn.Parameter(torch.empty((dim, dim))).to(device)
+        self.R = nn.Parameter(torch.empty((dim, dim)).to(device))
         self.D = nn.ParameterDict()
 
         for relation in relations:
-            self.D[relation] = nn.Parameter(torch.empty(dim, 1)).to(device)
+            self.D[relation] = nn.Parameter(torch.empty(dim, 1).to(device))
 
         self.init_weights()
 

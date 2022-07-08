@@ -11,19 +11,12 @@ from model import *
 from edge_loader import *
 
 import numpy as np
-from sklearn.metrics import roc_auc_score, accuracy_score
+from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
 import warnings
 warnings.filterwarnings("ignore")
 
-def get_accuracy_score(preds, labels, edge_types):
-    all_labels = torch.cat([labels[relation] for (_, relation, _) in edge_types], dim = -1)
-    all_preds = torch.cat([preds[relation] for (_, relation, _) in edge_types], dim = -1)
-    all_preds = torch.where(0.5 <= all_preds, 1, 0)
-
-    return accuracy_score(all_labels, all_preds)
-
-def get_roc_score(preds, labels, edge_types):
+def get_score(preds, labels, edge_types):
     all_labels = torch.cat([labels[relation] for (_, relation, _) in edge_types], dim = -1)
     all_preds = torch.cat([preds[relation] for (_, relation, _) in edge_types], dim = -1)
 
@@ -45,17 +38,11 @@ for (src, relation, dst) in edge_types:
     rev_edge_types.append((dst, rev_relation, src))
 
 transform = pyg_T.Compose([
-    pyg_T.AddSelfLoops(),
     pyg_T.RandomLinkSplit(num_val = 0.1, num_test = 0.2, is_undirected = True, 
         edge_types = edge_types, rev_edge_types = rev_edge_types, neg_sampling_ratio = 0.0)
 ])
 
 train_data, valid_data, test_data = transform(data)
-
-train_edge_label_index_dict = train_data.edge_label_index_dict
-
-batch_size = 128
-minibatch = EdgeBatchIterator(train_edge_label_index_dict, edge_types, batch_size = batch_size)
 
 
 print("Initialize model...")
@@ -78,9 +65,19 @@ relation_2_decoder = {
 
 out_dim = hidden_dim[-1]
 device = "cuda" if torch.cuda.is_available() else "cpu"
-net = Decagon(conv_dicts, out_dim, decoder_map, relation_2_decoder, use_sigmoid = False, device = device)
+net = Decagon(conv_dicts, out_dim, decoder_map, relation_2_decoder, use_sigmoid = False, device = device).to(device)
 loss_fn = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(net.parameters(), lr = 1e-4)
+
+data = data.to(device)
+train_data = train_data.to(device)
+valid_data = valid_data.to(device)
+test_data = test_data.to(device)
+
+train_edge_label_index_dict = train_data.edge_label_index_dict
+
+batch_size = 128
+minibatch = EdgeBatchIterator(train_edge_label_index_dict, edge_types, batch_size = batch_size)
 
 #a sample of training loop
 print("Training.....")
@@ -102,7 +99,7 @@ for epoch in range(30):
 
         pos_label = torch.ones(pos_edge_index.shape[1])
         neg_label = torch.zeros(neg_edge_index.shape[1])
-        label = torch.cat([pos_label, neg_label], dim = 0)
+        label = torch.cat([pos_label, neg_label], dim = 0).to(device)
         loss = loss_fn(output, label)
         loss.backward()
         optimizer.step()
@@ -120,13 +117,12 @@ for epoch in range(30):
             val_pos_edge_index = valid_data.edge_label_index_dict[edge_type]
             val_neg_edge_index = pyg_utils.negative_sampling(val_pos_edge_index, num_nodes = (num_src_node, num_dst_node))
             val_edge_index = torch.cat([val_pos_edge_index, val_neg_edge_index], dim = -1)
-            val_outputs[relation] = F.sigmoid(net.decode(z_dict, val_edge_index, edge_type))
+            val_outputs[relation] = F.sigmoid(net.decode(z_dict, val_edge_index, edge_type)).cpu()
             #sigmoid
 
             val_pos_label = torch.ones(val_pos_edge_index.shape[1])
             val_neg_label = torch.zeros(val_neg_edge_index.shape[1])
             val_labels[relation] = torch.cat([val_pos_label, val_neg_label], dim = 0)
 
-    acc = get_accuracy_score(val_outputs, val_labels, edge_types)
-    roc_auc = get_roc_score(val_outputs, val_labels, edge_types) 
-    print("Epoch: {}, Train Loss: {}, Val ROC: {}, Val Accuracy: {}".format(epoch, np.array(total_loss).mean(), roc_auc, acc))
+    roc_auc = get_score(val_outputs, val_labels, edge_types) 
+    print("Epoch: {}, Train Loss: {}, Val ROC: {}".format(epoch, np.array(total_loss).mean(), roc_auc))
