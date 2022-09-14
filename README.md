@@ -18,10 +18,11 @@ Make sure a Data folder is created in each data's subfolder. Then, you should do
     │   ├── ...
     └── README.md
    ```
-#### Polypharmacy 
-Download from [Decagon](https://github.com/mims-harvard/decagon)
 #### Anticancer
 Download from [ADRML](https://github.com/fahmadimoughari/AdrML)
+#### Polypharmacy 
+Download from [Decagon](https://github.com/mims-harvard/decagon)
+
 ## Run
 #### Anticancer
   ```bash
