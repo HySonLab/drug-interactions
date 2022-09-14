@@ -27,7 +27,7 @@ Download from [Decagon](https://github.com/mims-harvard/decagon)
 #### Anticancer
   ```bash
     cd Anticancer/
-    sh train.sh
+    bash train.sh
   ```
 #### Polypharmacy
 - Train GAE
