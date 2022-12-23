@@ -22,9 +22,6 @@ def reset_params(self):
         self.lin_edge.weight_initializer = "glorot"
         self.lin_edge_weight.reset_parameters()
 
-    if self.attention and self.attention_type == "additive":
-        glorot(self.att_msg)
-
 GeneralConv.reset_parameters = reset_params
 
 def generate_hetero_conv_dict(hidden_dims, edge_types, num_layer):
