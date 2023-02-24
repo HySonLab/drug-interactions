@@ -2,7 +2,8 @@
 
 Contributors:
 * Ngo Nhat Khang
-* Hy Truong Son (correspondent)
+* Hy Truong Son (Correspondent / PI)
+
 ## Requirements
 - [Pytorch](https://pytorch.org/)
 - [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/)\
