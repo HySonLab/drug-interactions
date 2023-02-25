@@ -4,6 +4,9 @@ Contributors:
 * Ngo Nhat Khang
 * Hy Truong Son (Correspondent / PI)
 
+Papers:
+* Predicting Drug-Drug Interactions using Deep Generative Models on Graphs, NeurIPS 2022 (AI for Science) https://arxiv.org/pdf/2209.09941.pdf
+
 ## Requirements
 - [Pytorch](https://pytorch.org/)
 - [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/)\
